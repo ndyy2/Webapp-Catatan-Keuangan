@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SwRegister } from "@/components/sw-register";
+import { AsistenWidget } from "@/components/asisten-widget";
 
 export const metadata: Metadata = {
   title: "Keuangan Keluarga",
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <SwRegister />
         <ThemeProvider>
           <AppShell>{children}</AppShell>
+          <AsistenWidget />
         </ThemeProvider>
       </body>
     </html>
