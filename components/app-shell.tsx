@@ -6,7 +6,6 @@ import { motion } from "motion/react";
 import {
   ArrowLeftRight,
   CalendarClock,
-  FlaskConical,
   Goal,
   HandCoins,
   LayoutDashboard,
@@ -17,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HeaderWidgets } from "@/components/header-widgets";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -65,10 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </span>
             </span>
           </Link>
-          <span className="ml-auto hidden items-center gap-1.5 rounded-full border border-glow/25 bg-glow/10 px-3 py-1 font-mono text-[11px] text-irish-soft sm:inline-flex">
-            <FlaskConical className="h-3.5 w-3.5" />
-            DATA PER AKUN
-          </span>
+          <HeaderWidgets />
           <Link
             href="/transaksi"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-irish-deep px-3.5 text-sm font-semibold text-white outline-none transition-colors hover:bg-irish focus-visible:ring-2 focus-visible:ring-glow/60 sm:hidden"
