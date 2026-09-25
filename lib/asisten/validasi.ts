@@ -1,13 +1,28 @@
 // Validasi grounding: setiap nominal Rp di jawaban HARUS muncul di hasil tool.
 // Murni (tanpa DB) agar bisa di-unit-test.
 
-// Ambil semua angka dari teks "Rp1.250.000" -> [1250000].
+// Ambil semua angka dari teks:
+// "Rp1.250.000" -> [1250000], "Rp1,250,000" -> [1250000],
+// "Rp1,5jt"/"Rp1.5 juta" -> [1500000], "Rp50rb" -> [50000].
+const MULT: Record<string, number> = { jt: 1e6, juta: 1e6, rb: 1e3, ribu: 1e3, k: 1e3, m: 1e9 };
+
 export function ekstrakNominal(teks: string): number[] {
   const out: number[] = [];
-  const re = /Rp\s?([\d.]+)/g;
+  const re = /Rp\s?([\d.,]+)\s*(jt|juta|rb|ribu|k|m)?(?![a-zA-Z0-9])/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(teks)) !== null) {
-    const n = Number(m[1].replace(/\./g, ""));
+    const akhiran = (m[2] ?? "").toLowerCase();
+    let n: number;
+    if (akhiran && MULT[akhiran]) {
+      // Dengan akhiran: titik = desimal KECUALI pola ribuan (1.550.000);
+      // koma selalu desimal ("1,5").
+      const ribuan = /^\d{1,3}(\.\d{3})+$/;
+      const dasar = ribuan.test(m[1]) ? m[1].replace(/\./g, "") : m[1].replace(/,/g, ".");
+      n = Math.round(Number(dasar) * MULT[akhiran]);
+    } else {
+      // Tanpa akhiran: titik DAN koma dianggap pemisah ribuan.
+      n = Number(m[1].replace(/[.,]/g, ""));
+    }
     if (Number.isInteger(n) && n > 0) out.push(n);
   }
   return out;

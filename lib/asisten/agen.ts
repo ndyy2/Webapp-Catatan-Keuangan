@@ -2,11 +2,11 @@ import "server-only";
 import Groq from "groq-sdk";
 import { bacaMemori, simpanMemori } from "./memori";
 import { DEFINISI_TOOLS, TOOL_TULIS, eksekusiBaca, ringkasUsulan } from "./tools";
-import { validasiJawaban } from "./validasi";
+import { validasiJawaban, angkaSumber } from "./validasi";
 
 export type Usulan = { nama: string; argumen: Record<string, unknown>; ringkasan: string };
 
-const JATUH = "Maaf, jawabanku tadi mengandung angka yang tidak berasal dari datamu. Coba tanyakan ulang dengan lebih spesifik.";
+const JATUH = "Hmm, aku tidak yakin dengan angkanya karena datanya tidak lengkap di sisiku. Coba tanyakan ulang, mis. 'saldo bulan ini berapa?'.";
 
 const MODEL_UTAMA = process.env.GROQ_MODEL ?? "qwen/qwen3.8-27b";
 const MODEL_CADANGAN = "llama-3.3-70b-versatile";
@@ -53,7 +53,7 @@ export async function jalanAgen(
   const memori = await bacaMemori(userId);
   const system =
     `Kamu asisten keuangan keluarga Indonesia. Jawab Bahasa Indonesia, ringkas. ` +
-    `Uang dalam Rupiah (Rp1.250.000). Hari ini: ${new Date().toISOString().slice(0, 10)}. ` +
+    `Uang dalam Rupiah format penuh (contoh Rp1.250.000, jangan disingkat). Hari ini: ${new Date().toISOString().slice(0, 10)}. ` +
     `Aturan: angka Rupiah HANYA dari hasil tool, jangan mengarang. Bila data tak ada, katakan jujur. ` +
     `Tool tulis (buat/ubah/hapus/bayar/anggaran) TIDAK kamu eksekusi: panggil toolnya, ` +
     `lalu minta konfirmasi user dengan merangkum aksinya dalam 1 kalimat. ` +
@@ -76,7 +76,14 @@ export async function jalanAgen(
     if (!m.tool_calls?.length) {
       const jawaban = m.content ?? "(kosong)";
       const v = validasiJawaban(jawaban, sumber, [pesan, ...riwayat.map((r) => r.isi)]);
-      if (!v.ok) return { jawaban: JATUH, usulan: [] };
+      if (!v.ok) {
+        console.warn("[asisten] angka tak terverifikasi", {
+          asing: v.asing,
+          sumber: [...angkaSumber(sumber)].slice(0, 30),
+          jawaban: jawaban.slice(0, 300),
+        });
+        return { jawaban: JATUH, usulan: [] };
+      }
       return { jawaban, usulan };
     }
     msgs.push({ role: "assistant", content: m.content ?? null, tool_calls: m.tool_calls });

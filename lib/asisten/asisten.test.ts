@@ -58,6 +58,14 @@ describe("validasi grounding", () => {
     expect(ekstrakNominal("tanpa angka")).toEqual([]);
   });
 
+  it("format koma + singkatan dinormalisasi", () => {
+    expect(ekstrakNominal("Rp1,250,000")).toEqual([1250000]);
+    expect(ekstrakNominal("Rp1,5jt")).toEqual([1500000]);
+    expect(ekstrakNominal("sekitar Rp1.55 juta")).toEqual([1550000]);
+    expect(ekstrakNominal("Rp50rb")).toEqual([50000]);
+    expect(ekstrakNominal("Rp100kali")).toEqual([]);
+  });
+
   it("lolos bila semua angka ada di sumber", () => {
     const sumber = [{ masuk: 3000000, keluar: 1750000 }, [{ kategori: "Pangan", jumlah: 1550000 }]];
     expect(angkaSumber(sumber).has(1550000)).toBe(true);
