@@ -151,6 +151,18 @@ export const DEFINISI_TOOLS: Groq.Chat.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "ingat_fakta",
+      description: "Simpan fakta singkat tentang user (nama panggilan, jadwal gaji, preferensi). Maks 1 kalimat.",
+      parameters: {
+        type: "object",
+        properties: { fakta: { type: "string" } },
+        required: ["fakta"],
+      },
+    },
+  },
 ];
 
 export const TOOL_TULIS = new Set([

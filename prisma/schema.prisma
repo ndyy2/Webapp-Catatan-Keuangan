@@ -180,6 +180,7 @@ model user {
   sessions      session[]
   accounts      account[]
   pesan         PesanAsisten[]
+  memori        MemoriAsisten[]
 
   @@unique([email])
   @@map("user")
@@ -240,4 +241,16 @@ model PesanAsisten {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+// Memori singkat: fakta/preferensi user yang disimpan asisten (maks 20/user).
+model MemoriAsisten {
+  id        String   @id @default(cuid())
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isi       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
 }
