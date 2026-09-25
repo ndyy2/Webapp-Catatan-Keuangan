@@ -8,6 +8,41 @@ export type Usulan = { nama: string; argumen: Record<string, unknown>; ringkasan
 
 const JATUH = "Maaf, jawabanku tadi mengandung angka yang tidak berasal dari datamu. Coba tanyakan ulang dengan lebih spesifik.";
 
+const MODEL_UTAMA = process.env.GROQ_MODEL ?? "qwen/qwen3.8-27b";
+const MODEL_CADANGAN = "llama-3.3-70b-versatile";
+
+function modelTakDitemukan(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return /model.*not.*found|invalid.*model|does not exist/i.test(m);
+}
+
+async function chat(
+  groq: Groq,
+  msgs: Groq.Chat.ChatCompletionMessageParam[],
+): Promise<Groq.Chat.ChatCompletion> {
+  try {
+    return await groq.chat.completions.create({
+      model: MODEL_UTAMA,
+      messages: msgs,
+      tools: DEFINISI_TOOLS,
+      tool_choice: "auto",
+      temperature: 0.2,
+      max_tokens: 1024,
+    });
+  } catch (e) {
+    if (!modelTakDitemukan(e)) throw e;
+    // Model utama tak dikenal Groq: coba cadangan sekali.
+    return await groq.chat.completions.create({
+      model: MODEL_CADANGAN,
+      messages: msgs,
+      tools: DEFINISI_TOOLS,
+      tool_choice: "auto",
+      temperature: 0.2,
+      max_tokens: 1024,
+    });
+  }
+}
+
 export async function jalanAgen(
   apiKey: string,
   riwayat: { peran: string; isi: string }[],
@@ -35,19 +70,12 @@ export async function jalanAgen(
   const usulan: Usulan[] = [];
   const sumber: unknown[] = [];
   for (let putaran = 0; putaran < 5; putaran++) {
-    const res = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL ?? "qwen/qwen3.8-27b",
-      messages: msgs,
-      tools: DEFINISI_TOOLS,
-      tool_choice: "auto",
-      temperature: 0.2,
-      max_tokens: 1024,
-    });
+    const res = await chat(groq, msgs);
     const m = res.choices[0]?.message;
     if (!m) throw new Error("Groq tak menjawab");
     if (!m.tool_calls?.length) {
       const jawaban = m.content ?? "(kosong)";
-      const v = validasiJawaban(jawaban, sumber);
+      const v = validasiJawaban(jawaban, sumber, [pesan, ...riwayat.map((r) => r.isi)]);
       if (!v.ok) return { jawaban: JATUH, usulan: [] };
       return { jawaban, usulan };
     }

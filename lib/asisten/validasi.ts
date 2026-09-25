@@ -13,6 +13,19 @@ export function ekstrakNominal(teks: string): number[] {
   return out;
 }
 
+// Angka bebas (tanpa Rp) untuk konteks user, mis. "catat 50000" -> [50000].
+// Minimal 4 digit agar tanggal/satuan kecil tak ikut.
+export function ekstrakBebas(teks: string): number[] {
+  const out: number[] = [];
+  const re = /\b(\d[\d.]*)\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(teks)) !== null) {
+    const n = Number(m[1].replace(/\./g, ""));
+    if (Number.isInteger(n) && n >= 1000) out.push(n);
+  }
+  return out;
+}
+
 // Kumpulkan semua bilangan bulat positif dari hasil tool (rekursif).
 function kumpulAngka(data: unknown, ke: Set<number>): void {
   if (typeof data === "number" && Number.isInteger(data) && data > 0) {
@@ -36,8 +49,18 @@ export function angkaSumber(hasilTools: unknown[]): Set<number> {
 
 // Nominal jawaban yang tak ada di sumber = halusinasi (dengan toleransi
 // persen: angka ≤100 yang muncul dengan tanda % diabaikan).
-export function validasiJawaban(jawaban: string, hasilTools: unknown[]): { ok: boolean; asing: number[] } {
+// `konteks` = teks user + riwayat: angka yang user sendiri tulis boleh
+// digaungkan kembali (bukan halusinasi).
+export function validasiJawaban(
+  jawaban: string,
+  hasilTools: unknown[],
+  konteks: string[] = [],
+): { ok: boolean; asing: number[] } {
   const sumber = angkaSumber(hasilTools);
+  for (const k of konteks) {
+    for (const n of ekstrakNominal(k)) sumber.add(n);
+    for (const n of ekstrakBebas(k)) sumber.add(n);
+  }
   const asing = ekstrakNominal(jawaban).filter((n) => !sumber.has(n));
   return { ok: asing.length === 0, asing };
 }

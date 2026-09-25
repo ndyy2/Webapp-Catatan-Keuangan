@@ -68,6 +68,13 @@ describe("validasi grounding", () => {
   it("persen kecil bukan nominal (tak ditulis Rp) diabaikan", () => {
     expect(validasiJawaban("Naik 20% bulan ini", [{ keluar: 100000 }]).ok).toBe(true);
   });
+
+  it("angka dari pesan user boleh digaungkan", () => {
+    expect(
+      validasiJawaban("Siap, catat keluar Rp50.000?", [], ["catat keluar 50000 pangan"]).ok,
+    ).toBe(true);
+    expect(validasiJawaban("Siap, catat keluar Rp50.000?", []).ok).toBe(false);
+  });
 });
 
 describe("memori singkat", () => {
