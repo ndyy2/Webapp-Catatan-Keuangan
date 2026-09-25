@@ -174,10 +174,12 @@ model user {
   email         String
   emailVerified Boolean   @default(false)
   image         String?
+  groqKey       String? // kunci Groq user, terenkripsi AES-GCM (BYOK)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      session[]
   accounts      account[]
+  pesan         PesanAsisten[]
 
   @@unique([email])
   @@map("user")
@@ -226,4 +228,16 @@ model verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+// Riwayat chat asisten AI (20 terakhir per user dipakai sebagai konteks).
+model PesanAsisten {
+  id        String   @id @default(cuid())
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  peran     String // user | asisten
+  isi       String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
