@@ -28,7 +28,7 @@ export async function jalanAgen(
   const usulan: Usulan[] = [];
   for (let putaran = 0; putaran < 5; putaran++) {
     const res = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL ?? "qwen/qwen3-32b",
+      model: process.env.GROQ_MODEL ?? "qwen/qwen3.8-27b",
       messages: msgs,
       tools: DEFINISI_TOOLS,
       tool_choice: "auto",
